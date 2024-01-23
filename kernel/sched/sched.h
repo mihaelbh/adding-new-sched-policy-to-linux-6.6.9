@@ -196,10 +196,16 @@ static inline int dl_policy(int policy)
 {
 	return policy == SCHED_DEADLINE;
 }
+
+static inline int new_policy(int policy)
+{
+	return policy == SCHED_NEW;
+}
+
 static inline bool valid_policy(int policy)
 {
 	return idle_policy(policy) || fair_policy(policy) ||
-		rt_policy(policy) || dl_policy(policy);
+		rt_policy(policy) || dl_policy(policy) || new_policy(policy);
 }
 
 static inline int task_has_idle_policy(struct task_struct *p)
@@ -651,6 +657,11 @@ struct cfs_rq {
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 };
 
+struct new_rq {
+	struct rb_root new_root;
+	unsigned int nr_running;
+};
+
 static inline int rt_bandwidth_enabled(void)
 {
 	return sysctl_sched_rt_runtime >= 0;
@@ -998,6 +1009,7 @@ struct rq {
 	struct cfs_rq		cfs;
 	struct rt_rq		rt;
 	struct dl_rq		dl;
+	struct new_rq		new_rq;
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
 	/* list of leaf cfs_rq on this CPU: */

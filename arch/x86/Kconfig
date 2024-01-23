@@ -2988,6 +2988,14 @@ config HAVE_ATOMIC_IOMAP
 	def_bool y
 	depends on X86_32
 
+menu "NEW scheduler"
+
+config SCHED_NEW_POLICY
+	bool "NEW scheduling policy"
+	default y
+
+endmenu
+
 source "arch/x86/kvm/Kconfig"
 
 source "arch/x86/Kconfig.assembler"

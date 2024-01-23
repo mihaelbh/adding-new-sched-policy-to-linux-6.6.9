@@ -96,6 +96,8 @@
 #include "../../io_uring/io-wq.h"
 #include "../smpboot.h"
 
+#include "newsched.c"
+
 EXPORT_TRACEPOINT_SYMBOL_GPL(ipi_send_cpu);
 EXPORT_TRACEPOINT_SYMBOL_GPL(ipi_send_cpumask);
 
@@ -2149,6 +2151,8 @@ static inline int __normal_prio(int policy, int rt_prio, int nice)
 		prio = MAX_DL_PRIO - 1;
 	else if (rt_policy(policy))
 		prio = MAX_RT_PRIO - 1 - rt_prio;
+	else if (new_policy(policy))
+		prio = 1;
 	else
 		prio = NICE_TO_PRIO(nice);
 
@@ -7021,13 +7025,18 @@ int default_wake_function(wait_queue_entry_t *curr, unsigned mode, int wake_flag
 }
 EXPORT_SYMBOL(default_wake_function);
 
-static void __setscheduler_prio(struct task_struct *p, int prio)
+static void __setscheduler_prio(struct task_struct *p, int prio, int policy)
 {
 	if (dl_prio(prio))
 		p->sched_class = &dl_sched_class;
 	else if (rt_prio(prio))
 		p->sched_class = &rt_sched_class;
 	else
+#ifdef CONFIG_SCHED_NEW_POLICY
+	if(policy == SCHED_NEW)
+		p->sched_class = &new_sched_class;
+	else
+#endif
 		p->sched_class = &fair_sched_class;
 
 	p->prio = prio;
@@ -7160,7 +7169,7 @@ void rt_mutex_setprio(struct task_struct *p, struct task_struct *pi_task)
 			p->rt.timeout = 0;
 	}
 
-	__setscheduler_prio(p, prio);
+	__setscheduler_prio(p, prio, p->policy);
 
 	if (queued)
 		enqueue_task(rq, p, queue_flag);
@@ -7651,13 +7660,13 @@ recheck:
 
 	/*
 	 * Valid priorities for SCHED_FIFO and SCHED_RR are
-	 * 1..MAX_RT_PRIO-1, valid priority for SCHED_NORMAL,
+	 * 2..MAX_RT_PRIO-1, valid priority for SCHED_NORMAL,
 	 * SCHED_BATCH and SCHED_IDLE is 0.
 	 */
 	if (attr->sched_priority > MAX_RT_PRIO-1)
 		return -EINVAL;
 	if ((dl_policy(policy) && !__checkparam_dl(attr)) ||
-	    (rt_policy(policy) != (attr->sched_priority != 0)))
+	    (rt_policy(policy) != ((attr->sched_priority != 0) && (attr->sched_priority != 1))))
 		return -EINVAL;
 
 	if (user) {
@@ -7806,7 +7815,7 @@ change:
 
 	if (!(attr->sched_flags & SCHED_FLAG_KEEP_PARAMS)) {
 		__setscheduler_params(p, attr);
-		__setscheduler_prio(p, newprio);
+		__setscheduler_prio(p, newprio, policy);
 	}
 	__setscheduler_uclamp(p, attr);
 
@@ -9046,6 +9055,11 @@ SYSCALL_DEFINE1(sched_get_priority_max, int, policy)
 	case SCHED_RR:
 		ret = MAX_RT_PRIO-1;
 		break;
+#ifdef CONFIG_SCHED_NEW_POLICY
+	case SCHED_NEW:
+		ret = 1;
+		break;
+#endif
 	case SCHED_DEADLINE:
 	case SCHED_NORMAL:
 	case SCHED_BATCH:
@@ -9071,8 +9085,16 @@ SYSCALL_DEFINE1(sched_get_priority_min, int, policy)
 	switch (policy) {
 	case SCHED_FIFO:
 	case SCHED_RR:
+#ifdef CONFIG_SCHED_NEW_POLICY
+		ret = 2;
+		break;
+	case SCHED_NEW:
 		ret = 1;
 		break;
+#else
+		ret = 1;
+		break;
+#endif
 	case SCHED_DEADLINE:
 	case SCHED_NORMAL:
 	case SCHED_BATCH:
@@ -9983,7 +10005,9 @@ void __init sched_init(void)
 		rq->calc_load_update = jiffies + LOAD_FREQ;
 		init_cfs_rq(&rq->cfs);
 		init_rt_rq(&rq->rt);
-		init_dl_rq(&rq->dl);
+#ifdef CONFIG_SCHED_NEW_POLICY
+		init_new_rq(&rq->new_rq);
+#endif
 #ifdef CONFIG_FAIR_GROUP_SCHED
 		INIT_LIST_HEAD(&rq->leaf_cfs_rq_list);
 		rq->tmp_alone_branch = &rq->leaf_cfs_rq_list;
