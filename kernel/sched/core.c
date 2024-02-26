@@ -4774,7 +4774,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 	if (dl_prio(p->prio))
 		return -EAGAIN;
 #ifdef CONFIG_SCHED_NEW_POLICY
-	else if(policy == SCHED_NEW)
+	else if(p->policy == SCHED_NEW)
 		p->sched_class = &new_sched_class;
 #endif
 	else if (rt_prio(p->prio))
