@@ -4774,7 +4774,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 	if (dl_prio(p->prio))
 		return -EAGAIN;
 #ifdef CONFIG_SCHED_NEW_POLICY
-	else if(p->policy == SCHED_NEW)
+	else if(p->prio == 1)
 		p->sched_class = &new_sched_class;
 #endif
 	else if (rt_prio(p->prio))
@@ -7029,13 +7029,15 @@ int default_wake_function(wait_queue_entry_t *curr, unsigned mode, int wake_flag
 }
 EXPORT_SYMBOL(default_wake_function);
 
-static void __setscheduler_prio(struct task_struct *p, int prio, int policy)
+static void __setscheduler_prio(struct task_struct *p, int prio)
 {
 	if (dl_prio(prio))
 		p->sched_class = &dl_sched_class;
 #ifdef CONFIG_SCHED_NEW_POLICY
-	else if(policy == SCHED_NEW)
+	else if(prio == 1) {
 		p->sched_class = &new_sched_class;
+		printk(KERN_INFO "sched_class set to new_sched_class\n");
+	}
 #endif
 	else if (rt_prio(prio))
 		p->sched_class = &rt_sched_class;
@@ -7172,7 +7174,7 @@ void rt_mutex_setprio(struct task_struct *p, struct task_struct *pi_task)
 			p->rt.timeout = 0;
 	}
 
-	__setscheduler_prio(p, prio, p->policy);
+	__setscheduler_prio(p, prio);
 
 	if (queued)
 		enqueue_task(rq, p, queue_flag);
@@ -7634,6 +7636,9 @@ static int __sched_setscheduler(struct task_struct *p,
 				const struct sched_attr *attr,
 				bool user, bool pi)
 {
+
+	printk(KERN_INFO "enter __sched_setscheduler\n");
+
 	int oldpolicy = -1, policy = attr->sched_policy;
 	int retval, oldprio, newprio, queued, running;
 	const struct sched_class *prev_class;
@@ -7818,7 +7823,7 @@ change:
 
 	if (!(attr->sched_flags & SCHED_FLAG_KEEP_PARAMS)) {
 		__setscheduler_params(p, attr);
-		__setscheduler_prio(p, newprio, policy);
+		__setscheduler_prio(p, newprio);
 	}
 	__setscheduler_uclamp(p, attr);
 
@@ -7858,6 +7863,8 @@ unlock:
 	task_rq_unlock(rq, p, &rf);
 	if (cpuset_locked)
 		cpuset_unlock();
+
+	printk(KERN_INFO "exit __sched_setscheduler\n");
 	return retval;
 }
 
