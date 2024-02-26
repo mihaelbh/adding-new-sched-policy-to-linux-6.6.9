@@ -50,6 +50,8 @@ int rb_insert(struct rb_root* root, struct new_sched_task* task) {
 
 static void enqueue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     
+    printk(KERN_INFO "enter enqueue_task_new\n");
+
     if(! p) {
         return;
     }
@@ -65,11 +67,13 @@ static void enqueue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     */
     rb_insert(&rq->new_rq.new_root, &p->nst);
     (rq->new_rq.nr_running)++;
-    printk(KERN_INFO "enqueue_task_new\n");
+    printk(KERN_INFO "exit enqueue_task_new\n");
 }
 
 static void dequeue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     
+    printk(KERN_INFO "enter dequeue_task_new\n");
+
     if(! p) {
         return;
     }
@@ -81,21 +85,20 @@ static void dequeue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     */
     rb_erase(p->nst.node, &rq->new_rq.new_root);
     (rq->new_rq.nr_running)--;
-    printk(KERN_INFO "dequeue_task_new\n");
+    printk(KERN_INFO "exit dequeue_task_new\n");
 }
 
 /*
-odabire se zadatak koji ide u CPU
+pick next task to run on a CPU
 */
 static struct task_struct* pick_next_task_new(struct rq *rq) {
+
+    printk(KERN_INFO "enter pick_next_task_new\n");
 
     if(! rq) {
         return NULL;
     }
 
-    /*
-    odaberi element koji je najduže u stablu jer se njega želimo što prije riješiti
-    */
     struct rb_node** first = kzalloc(sizeof(struct rb_node*), GFP_KERNEL);
     *first = rb_first(&rq->new_rq.new_root);
 
@@ -107,21 +110,24 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
     
     struct task_struct* task = container_of(new_task, struct task_struct, nst);
     
-    printk(KERN_INFO "pick_next_task_new\n");
+    printk(KERN_INFO "exit pick_next_task_new\n");
     return task;
 }
 
 /*
-poziva se prije nego što se zadatak makne iz CPU-a
+is called before a task is removed from CPU
 */
 void put_prev_task_new(struct rq *rq, struct task_struct *p) {
     printk(KERN_INFO "put_prev_task_new\n");
 }
 
 /*
-označava task da smora prestati s izvršavanjem
+mark a task that has to stop executing
 */
 static void check_preempt_curr_new(struct rq *rq, struct task_struct *p, int flags) {
+    
+    printk(KERN_INFO "enter check_preempt_curr_new\n");
+
     struct rb_node* first = rb_first(&rq->new_rq.new_root);
 
     if(! first) {
@@ -130,20 +136,15 @@ static void check_preempt_curr_new(struct rq *rq, struct task_struct *p, int fla
 
     struct new_sched_task* new_task = container_of(&first, struct new_sched_task, node);
     
-    /*
-    ako postoji neki neki element koji je duže u stablu ili
-    ako je trenutni task manjeg prioriteta od ovog
-
-    */
     if(p->nst.enqueued_at < new_task->enqueued_at || rq->curr->rt_priority < 1) {
         resched_curr(rq);
     }
 
-    printk(KERN_INFO "check_preempt_curr_new\n");
+    printk(KERN_INFO "exit check_preempt_curr_new\n");
 }
 
 /*
-poziva se svaki put kada se timer interrupt dogodi
+called when timer interupt happends
 */
 void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
     printk(KERN_INFO "task_tick_new\n");
@@ -155,9 +156,11 @@ static void set_next_task_new(struct rq *rq, struct task_struct *p, bool first) 
 }
 
 /*
-updateaj runtime statistics za trenutni task
+update runtime statistics
 */
 static void update_curr_new(struct rq *rq) {
+
+    printk(KERN_INFO "enter update_curr_new\n");
 
     struct task_struct* curr = rq->curr;
     u64 now = rq_clock_task(rq);
@@ -170,7 +173,7 @@ static void update_curr_new(struct rq *rq) {
     curr->se.exec_start = now;
     curr->se.sum_exec_runtime += delta_exec;
 
-    printk(KERN_INFO "update_curr_new\n");
+    printk(KERN_INFO "exit update_curr_new\n");
 }
 
 DEFINE_SCHED_CLASS(new) = {
