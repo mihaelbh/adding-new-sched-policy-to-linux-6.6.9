@@ -101,7 +101,7 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
 
     struct rb_node* first = rb_first(&rq->new_rq.new_root);
 
-    if(! (*first)) {
+    if(!first) {
         return NULL;
     }
 
