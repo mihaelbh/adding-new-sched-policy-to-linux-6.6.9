@@ -7964,7 +7964,7 @@ EXPORT_SYMBOL_GPL(sched_set_fifo);
  */
 void sched_set_fifo_low(struct task_struct *p)
 {
-	struct sched_param sp = { .sched_priority = 1 };
+	struct sched_param sp = { .sched_priority = 2 };
 	WARN_ON_ONCE(sched_setscheduler_nocheck(p, SCHED_FIFO, &sp) != 0);
 }
 EXPORT_SYMBOL_GPL(sched_set_fifo_low);
