@@ -153,40 +153,21 @@ static void check_preempt_curr_new(struct rq *rq, struct task_struct *p, int fla
 called when task changes policy or group
 */
 static void set_next_task_new(struct rq *rq, struct task_struct *p, bool first) {
-    printk(KERN_INFO "enter set_next_task_new\n");
-    rq->curr = p;
-    printk(KERN_INFO "exit set_next_task_new\n");
+    printk(KERN_INFO "set_next_task_new\n");
 }
 
 /*
 update runtime statistics
 */
 static void update_curr_new(struct rq *rq) {
-
-    printk(KERN_INFO "enter update_curr_new\n");
-
-    struct task_struct* curr = rq->curr;
-    u64 now = rq_clock_task(rq);
-	u64 delta_exec =  now - curr->se.exec_start;
-
-    if (curr->sched_class != &new_sched_class || (s64) delta_exec <= 0) {
-		printk(KERN_INFO "exit update_curr_new, sched_class is not new_sched_class or delta_exec <= 0\n");
-        return;
-    }
-
-    curr->se.exec_start = now;
-    curr->se.sum_exec_runtime += delta_exec;
-
-    printk(KERN_INFO "exit update_curr_new\n");
+    printk(KERN_INFO "update_curr_new\n");
 }
 
 /*
 called when timer interupt happends
 */
 static void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
-    printk(KERN_INFO "enter task_tick_new\n");
-    update_curr_new(rq)
-    printk(KERN_INFO "exit task_tick_new\n");
+    printk(KERN_INFO "task_tick_new\n");
 }
 
 DEFINE_SCHED_CLASS(new) = {

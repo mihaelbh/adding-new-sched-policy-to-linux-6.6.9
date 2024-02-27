@@ -44,6 +44,10 @@
 
 #include "rt.c"
 
+#ifdef CONFIG_SCHED_NEW_POLICY
+#include "newsched.c"
+#endif
+
 #ifdef CONFIG_SMP
 # include "cpudeadline.c"
 # include "pelt.c"
