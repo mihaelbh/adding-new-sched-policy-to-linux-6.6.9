@@ -52,18 +52,17 @@ static void enqueue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     printk(KERN_INFO "enter enqueue_task_new\n");
 
     if(! p) {
+        printk(KERN_INFO "exit enqueue_task_new, p is NULL\n");
         return;
     }
 
     p->nst.enqueued_at = sched_clock();
 
     if(! rq) {
+        printk(KERN_INFO "exit enqueue_task_new, rq is NULL\n");
         return;
     }
 
-    /*
-    spremi task u rb stablo
-    */
     rb_insert(&rq->new_rq.new_root, &p->nst);
     (rq->new_rq.nr_running)++;
     printk(KERN_INFO "exit enqueue_task_new\n");
@@ -74,14 +73,17 @@ static void dequeue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     printk(KERN_INFO "enter dequeue_task_new\n");
 
     if(! p) {
+        printk(KERN_INFO "exit dequeue_task_new, p is NULL\n");
         return;
     }
 
     p->nst.enqueued_at = 0;
 
-    /*
-    makni task iz rb stabla
-    */
+    if(! rq) {
+        printk(KERN_INFO "exit dequeue_task_new, rq is NULL\n");
+        return;
+    }
+
     rb_erase(p->nst.node, &rq->new_rq.new_root);
     (rq->new_rq.nr_running)--;
     printk(KERN_INFO "exit dequeue_task_new\n");
@@ -95,17 +97,21 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
     printk(KERN_INFO "enter pick_next_task_new\n");
 
     if(! rq) {
+        printk(KERN_INFO "exit pick_next_task_new, rq is NULL\n");
         return NULL;
     }
 
-    struct rb_node* first = rb_first(&rq->new_rq.new_root);
+    struct rb_node** first = kzalloc(sizeof(struct rb_node*), GFP_KERNEL);
+    *first = rb_first(&rq->new_rq.new_root);
 
-    if(!first) {
+    if(! (*first)) {
+        printk(KERN_INFO "exit pick_next_task_new, rb_tree is empty\n");
         return NULL;
     }
 
-    struct new_sched_task* new_task = container_of(&first, struct new_sched_task, node);
-    
+    struct new_sched_task* new_task = container_of(first, struct new_sched_task, node);
+
+
     struct task_struct* task = container_of(new_task, struct task_struct, nst);
     
     printk(KERN_INFO "exit pick_next_task_new\n");
@@ -115,7 +121,7 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
 /*
 is called before a task is removed from CPU
 */
-void put_prev_task_new(struct rq *rq, struct task_struct *p) {
+static void put_prev_task_new(struct rq *rq, struct task_struct *p) {
     printk(KERN_INFO "put_prev_task_new\n");
 }
 
@@ -129,23 +135,18 @@ static void check_preempt_curr_new(struct rq *rq, struct task_struct *p, int fla
     struct rb_node* first = rb_first(&rq->new_rq.new_root);
 
     if(! first) {
+        printk(KERN_INFO "exit check_preempt_curr_new, rb_tree is empty\n");
         return;
     }
 
     struct new_sched_task* new_task = container_of(&first, struct new_sched_task, node);
     
-    if(p->nst.enqueued_at < new_task->enqueued_at || rq->curr->rt_priority < 1) {
+    if((p->nst.enqueued_at < new_task->enqueued_at && rq->curr->policy == SCHED_NEW) || 
+        rq->curr->policy == SCHED_FIFO || rq->curr->policy == SCHED_RR || rq->curr->policy == SCHED_DEADLINE) {
         resched_curr(rq);
     }
 
     printk(KERN_INFO "exit check_preempt_curr_new\n");
-}
-
-/*
-called when timer interupt happends
-*/
-void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
-    printk(KERN_INFO "task_tick_new\n");
 }
 
 /*
@@ -169,13 +170,23 @@ static void update_curr_new(struct rq *rq) {
 	u64 delta_exec =  now - curr->se.exec_start;
 
     if (curr->sched_class != &new_sched_class || (s64) delta_exec <= 0) {
-		return;
+		printk(KERN_INFO "exit update_curr_new, sched_class is not new_sched_class or delta_exec <= 0\n");
+        return;
     }
 
     curr->se.exec_start = now;
     curr->se.sum_exec_runtime += delta_exec;
 
     printk(KERN_INFO "exit update_curr_new\n");
+}
+
+/*
+called when timer interupt happends
+*/
+static void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
+    printk(KERN_INFO "enter task_tick_new\n");
+    update_curr_new(rq)
+    printk(KERN_INFO "exit task_tick_new\n");
 }
 
 DEFINE_SCHED_CLASS(new) = {
