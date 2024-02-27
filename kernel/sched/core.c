@@ -7659,42 +7659,58 @@ recheck:
 	} else {
 		reset_on_fork = !!(attr->sched_flags & SCHED_FLAG_RESET_ON_FORK);
 
-		if (!valid_policy(policy))
+		if (!valid_policy(policy)) {
+			printk(KERN_INFO "exit __sched_setscheduler, not valid policy\n");
 			return -EINVAL;
+		}
 	}
 
-	if (attr->sched_flags & ~(SCHED_FLAG_ALL | SCHED_FLAG_SUGOV))
+	if (attr->sched_flags & ~(SCHED_FLAG_ALL | SCHED_FLAG_SUGOV)) {
+		printk(KERN_INFO "exit __sched_setscheduler, wrong flags\n");
 		return -EINVAL;
+	}
 
 	/*
 	 * Valid priorities for SCHED_FIFO and SCHED_RR are
 	 * 2..MAX_RT_PRIO-1, valid priority for SCHED_NORMAL,
 	 * SCHED_BATCH and SCHED_IDLE is 0.
 	 */
-	if (attr->sched_priority > MAX_RT_PRIO-1)
+	if (attr->sched_priority > MAX_RT_PRIO-1) {
+		printk(KERN_INFO "exit __sched_setscheduler, priority > MAX_RT_PRIO-1\n");
 		return -EINVAL;
+	}
 	if ((dl_policy(policy) && !__checkparam_dl(attr)) ||
-	    (rt_policy(policy) != ((attr->sched_priority != 0) && (attr->sched_priority != 1))))
+	    (rt_policy(policy) != ((attr->sched_priority != 0) && (attr->sched_priority != 1)))) {
+		printk(KERN_INFO "exit __sched_setscheduler, rt policy and priority < 1 or dl policy and no dl param\n");
 		return -EINVAL;
+	}
 
 	if (user) {
 		retval = user_check_sched_setscheduler(p, attr, policy, reset_on_fork);
-		if (retval)
+		if (retval) {
+			printk(KERN_INFO "exit __sched_setscheduler, error\n");
 			return retval;
+		}
 
-		if (attr->sched_flags & SCHED_FLAG_SUGOV)
+		if (attr->sched_flags & SCHED_FLAG_SUGOV) {
+			printk(KERN_INFO "exit __sched_setscheduler, error\n");
 			return -EINVAL;
+		}
 
 		retval = security_task_setscheduler(p);
-		if (retval)
+		if (retval) {
+			printk(KERN_INFO "exit __sched_setscheduler, error\n");
 			return retval;
+		}
 	}
 
 	/* Update task specific "requested" clamps */
 	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP) {
 		retval = uclamp_validate(p, attr);
-		if (retval)
+		if (retval) {
+			printk(KERN_INFO "exit __sched_setscheduler, error\n");
 			return retval;
+		}
 	}
 
 	/*
