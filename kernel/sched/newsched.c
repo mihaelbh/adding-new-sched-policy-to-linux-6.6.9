@@ -153,7 +153,7 @@ called when task changes policy or group
 */
 static void set_next_task_new(struct rq *rq, struct task_struct *p, bool first) {
     printk(KERN_INFO "enter set_next_task_new\n");
-    resched_curr(rq);
+    rq->curr = p;
     printk(KERN_INFO "exit set_next_task_new\n");
 }
 

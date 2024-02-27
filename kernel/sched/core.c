@@ -7823,7 +7823,9 @@ change:
 		 * the runqueue. This will be done when the task deboost
 		 * itself.
 		 */
-		newprio = rt_effective_prio(p, newprio);
+		 if(!new_policy(policy))
+			newprio = rt_effective_prio(p, newprio);
+		
 		if (newprio == oldprio)
 			queue_flags &= ~DEQUEUE_MOVE;
 	}
@@ -7873,6 +7875,7 @@ change:
 	balance_callbacks(rq, head);
 	preempt_enable();
 
+	printk(KERN_INFO "exit __sched_setscheduler\n");
 	return 0;
 
 unlock:
