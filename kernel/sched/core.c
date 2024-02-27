@@ -96,8 +96,6 @@
 #include "../../io_uring/io-wq.h"
 #include "../smpboot.h"
 
-#include "newsched.c"
-
 EXPORT_TRACEPOINT_SYMBOL_GPL(ipi_send_cpu);
 EXPORT_TRACEPOINT_SYMBOL_GPL(ipi_send_cpumask);
 

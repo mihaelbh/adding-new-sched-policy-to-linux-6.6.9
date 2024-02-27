@@ -3,7 +3,6 @@
 #include "../../include/linux/container_of.h"
 #include "../../include/linux/sched.h"
 #include "../../include/linux/sched/clock.h"
-#include "sched.h"
 #include <linux/sched.h>
 #include "sched.h"
 
