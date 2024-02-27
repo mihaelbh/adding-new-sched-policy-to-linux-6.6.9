@@ -2879,7 +2879,7 @@ static inline void resched_latency_warn(int cpu, u64 latency) {}
 extern void init_cfs_rq(struct cfs_rq *cfs_rq);
 extern void init_rt_rq(struct rt_rq *rt_rq);
 extern void init_dl_rq(struct dl_rq *dl_rq);
-extern void init_new_rq(&rq->new_rq);
+extern void init_new_rq(struct new_rq* new_rq);
 
 extern void cfs_bandwidth_usage_inc(void);
 extern void cfs_bandwidth_usage_dec(void);
