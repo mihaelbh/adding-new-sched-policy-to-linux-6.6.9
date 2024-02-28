@@ -45,6 +45,7 @@ int rb_insert(struct rb_root* root, struct new_sched_task* task) {
 
 int rb_search(struct rb_root* root, struct new_sched_task* task) {
     struct rb_node* iterator = rb_first(root);
+    int rez;
 
     while(iterator) {
         struct new_sched_task* this = container_of(&iterator, struct new_sched_task, node);
@@ -84,7 +85,7 @@ static void enqueue_task_new(struct rq *rq, struct task_struct *p, int flags) {
         return;
     }
 
-    rb_insert(&rq->new_rq.new_root, &p->nst)
+    rb_insert(&rq->new_rq.new_root, &p->nst);
     (rq->new_rq.nr_running)++;
     printk(KERN_INFO "exit enqueue_task_new\n");
 }
