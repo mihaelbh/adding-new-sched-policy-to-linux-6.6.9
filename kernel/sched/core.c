@@ -7027,18 +7027,21 @@ EXPORT_SYMBOL(default_wake_function);
 
 static void __setscheduler_prio(struct task_struct *p, int prio)
 {
-	if (dl_prio(prio))
+	if (dl_prio(prio)) {
 		p->sched_class = &dl_sched_class;
+		printk(KERN_INFO "sched_class set to dl_sched_class\n");
 #ifdef CONFIG_SCHED_NEW_POLICY
-	else if(prio == 1) {
+	} else if(prio == 98) {
 		p->sched_class = &new_sched_class;
 		printk(KERN_INFO "sched_class set to new_sched_class\n");
-	}
 #endif
-	else if (rt_prio(prio))
+	} else if (rt_prio(prio)) {
 		p->sched_class = &rt_sched_class;
-	else
+		printk(KERN_INFO "sched_class set to rt_sched_class\n");
+	} else {
 		p->sched_class = &fair_sched_class;
+		printk(KERN_INFO "sched_class set to fair_sched_class\n");
+	}
 
 	p->prio = prio;
 }
