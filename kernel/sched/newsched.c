@@ -43,6 +43,22 @@ int rb_insert(struct rb_root* root, struct new_sched_task* task) {
     return 1;
 }
 
+int rb_search(struct rb_root* root, struct new_sched_task* task) {
+    struct rb_node* iterator = rb_first(root);
+
+    while(iterator) {
+        struct new_sched_task* this = container_of(&iterator, struct new_sched_task, node);
+        rez = task->enqueued_at - this->enqueued_at;
+
+        if(!rez) {
+            return 1;
+        }
+
+        iterator = rb_next(iterator);
+    }
+
+    return 0;
+}
 
 
 
@@ -63,7 +79,12 @@ static void enqueue_task_new(struct rq *rq, struct task_struct *p, int flags) {
         return;
     }
 
-    rb_insert(&rq->new_rq.new_root, &p->nst);
+    if(rb_search(&rq->new_rq.new_root, &p->nst)) {
+        printk(KERN_INFO "exit enqueue_task_new, task is already in the rbtree\n");
+        return;
+    }
+
+    rb_insert(&rq->new_rq.new_root, &p->nst)
     (rq->new_rq.nr_running)++;
     printk(KERN_INFO "exit enqueue_task_new\n");
 }
@@ -81,6 +102,11 @@ static void dequeue_task_new(struct rq *rq, struct task_struct *p, int flags) {
 
     if(! rq) {
         printk(KERN_INFO "exit dequeue_task_new, rq is NULL\n");
+        return;
+    }
+
+    if(!rb_search(&rq->new_rq.new_root, &p->nst)) {
+        printk(KERN_INFO "exit enqueue_task_new, task is not in rbtree\n");
         return;
     }
 
@@ -170,13 +196,65 @@ static void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
     printk(KERN_INFO "task_tick_new\n");
 }
 
+/*
+if task switches from SCHED_NEW it must be dequeued
+*/
+static void switched_from_new(struct rq *rq, struct task_struct *p) {
+    printk(KERN_INFO "enter switched_from_new\n");
+    dequeue_task_new(rq, p, 0);
+    printk(KERN_INFO "exit switched_from_new\n");
+}
+
+/*
+if task switches to SCHED_NEW it must be enqueued
+*/
+static void switched_to_new(struct rq *rq, struct task_struct *p) {
+    printk(KERN_INFO "enter switched_to_new\n");
+    enqueue_task_new(rq, p, 0);
+    printk(KERN_INFO "exit switched_to_new\n");
+}
+
+/*
+if prio is changed check if the task needs to be preempted
+*/
+static void prio_changed_new(struct rq *rq, struct task_struct *p, int oldprio) {
+    printk(KERN_INFO "enter prio_changed_new\n");
+    check_preempt_curr_new(rq, p, 0);
+    printk(KERN_INFO "exit prio_changed_new\n");
+}
+
+/*
+dequeue and enqueue again and check if it needs to be preempted
+*/
+static void yield_task_new(struct rq *rq) {
+    printk(KERN_INFO "enter yield_task_new\n");
+
+    struct task_struct* p = rq->curr;
+
+    dequeue_task_new(rq, p, 0);
+    enqueue_task_new(rq, p, 0);
+    check_preempt_curr_new(rq, p, 0);
+
+    printk(KERN_INFO "exit yield_task_new\n");
+}
+
+static unsigned int get_rr_interval_new(struct rq *rq, struct task_struct *task) {
+    printk(KERN_INFO "get_rr_interval_new\n");
+    return 0;
+}
+
 DEFINE_SCHED_CLASS(new) = {
-    .enqueue_task   = enqueue_task_new,
-    .dequeue_task   = dequeue_task_new,
-    .pick_next_task = pick_next_task_new,
-    .check_preempt_curr = check_preempt_curr_new,
-    .put_prev_task = put_prev_task_new,
-    .task_tick = task_tick_new,
-    .set_next_task = set_next_task_new,
-    .update_curr = update_curr_new
+    .enqueue_task           = enqueue_task_new,
+    .dequeue_task           = dequeue_task_new,
+    .pick_next_task         = pick_next_task_new,
+    .check_preempt_curr     = check_preempt_curr_new,
+    .put_prev_task          = put_prev_task_new,
+    .task_tick              = task_tick_new,
+    .set_next_task          = set_next_task_new,
+    .update_curr            = update_curr_new,
+    .switched_from          = switched_from_new,
+    .switched_to            = switched_to_new,
+    .prio_changed           = prio_changed_new,
+    .yield_task		        = yield_task_new,
+    .get_rr_interval	    = get_rr_interval_new
 };

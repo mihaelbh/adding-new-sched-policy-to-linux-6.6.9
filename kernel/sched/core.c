@@ -2147,10 +2147,8 @@ static inline int __normal_prio(int policy, int rt_prio, int nice)
 
 	if (dl_policy(policy))
 		prio = MAX_DL_PRIO - 1;
-	else if (rt_policy(policy))
+	else if (rt_policy(policy) || new_policy(policy))
 		prio = MAX_RT_PRIO - 1 - rt_prio;
-	else if (new_policy(policy))
-		prio = 1;
 	else
 		prio = NICE_TO_PRIO(nice);
 
@@ -7678,7 +7676,7 @@ recheck:
 		return -EINVAL;
 	}
 	if ((dl_policy(policy) && !__checkparam_dl(attr)) ||
-	    (rt_policy(policy) != ((attr->sched_priority != 0) && (attr->sched_priority != 1)))) {
+	    (rt_policy(policy) && ((attr->sched_priority == 0) || (attr->sched_priority == 1)))) {
 		printk(KERN_INFO "exit __sched_setscheduler, rt policy and priority < 1 or dl policy and no dl param\n");
 		return -EINVAL;
 	}
