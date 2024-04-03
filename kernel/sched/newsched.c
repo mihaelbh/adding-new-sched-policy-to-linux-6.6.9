@@ -14,9 +14,9 @@ u64 new_id = 1;
 
 
 void init_new_rq(struct new_rq* new_rq) {
-    new_rq->sched_queue = (struct list_head*) kmalloc_array(10, sizeof(struct list_head), GFP_KERNEL);
+    new_rq->sched_queue = (struct list_head*) kzalloc(10 * sizeof(struct list_head), GFP_KERNEL);
     for(int i=0; i<10; i++) {
-        LIST_HEAD(new_rq->(sched_queue[i]));
+        LIST_HEAD((new_rq->sched_queue)[i]);
     }
     new_rq->nr_running = 0;
     printk(KERN_INFO "init_new_rq\n");
