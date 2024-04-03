@@ -7,7 +7,7 @@
 struct sched_param {
 	int sched_priority;
 #ifdef CONFIG_SCHED_NEW_POLICY
-	int new_sched_param;
+	int new_sched_prio;
 #endif
 };
 
@@ -124,7 +124,7 @@ struct sched_attr {
 	__u32 sched_util_max;
 
 #ifdef CONFIG_SCHED_NEW_POLICY
-	int new_sched_param;
+	int new_sched_prio;
 #endif
 
 };

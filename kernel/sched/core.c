@@ -7541,6 +7541,8 @@ static void __setscheduler_params(struct task_struct *p,
 		__setparam_dl(p, attr);
 	else if (fair_policy(policy))
 		p->static_prio = NICE_TO_PRIO(attr->sched_nice);
+	else if(new_policy(policy))
+		p->nst.priority = attr->new_sched_prio;
 
 	/*
 	 * __sched_setscheduler() ensures attr->sched_priority == 0 when
@@ -7894,7 +7896,7 @@ static int _sched_setscheduler(struct task_struct *p, int policy,
 		.sched_priority = param->sched_priority,
 		.sched_nice	= PRIO_TO_NICE(p->static_prio),
 #ifdef CONFIG_SCHED_NEW_POLICY
-		.new_sched_param = param->new_sched_param;
+		.new_sched_prio = param->new_sched_prio;
 #endif
 	};
 
