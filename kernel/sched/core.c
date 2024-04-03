@@ -7896,7 +7896,7 @@ static int _sched_setscheduler(struct task_struct *p, int policy,
 		.sched_priority = param->sched_priority,
 		.sched_nice	= PRIO_TO_NICE(p->static_prio),
 #ifdef CONFIG_SCHED_NEW_POLICY
-		.new_sched_prio = param->new_sched_prio;
+		.new_sched_prio = param->new_sched_prio,
 #endif
 	};
 
