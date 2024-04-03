@@ -15,7 +15,8 @@ u64 new_id = 1;
 
 void init_new_rq(struct new_rq* new_rq) {
     for(int i=0; i<10; i++) {
-        new_rq->sched_queue[i] = { &(new_rq->sched_queue[i]), &(new_rq->sched_queue[i]) };
+        new_rq->sched_queue[i].prev = &new_rq->sched_queue[i];
+        new_rq->sched_queue[i].next = &new_rq->sched_queue[i];
     }
     new_rq->nr_running = 0;
     printk(KERN_INFO "init_new_rq\n");
@@ -47,7 +48,7 @@ static void enqueue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     //set time_slice (default RR time_slice is used)
     p->nst.time_slice = RR_TIMESLICE;
 
-    list_add_tail(&p->nst.node, &rq->new_rq.(sched_queue[p->nst.priority]));
+    list_add_tail(&p->nst.node, &rq->new_rq.sched_queue[p->nst.priority]);
 
     p->nst.on_rq = 1;
     (rq->new_rq.nr_running)++;
@@ -69,7 +70,7 @@ static void dequeue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     }
 
     struct new_sched_task* found = NULL;
-    list_for_each_entry(found, &rq->new_rq.(sched_queue[p->nst.priority]), node) {
+    list_for_each_entry(found, &rq->new_rq.sched_queue[p->nst.priority], node) {
         if(found->id == p->nst.id) {
             list_del(&found->node);
             break;
@@ -86,7 +87,7 @@ find list for priority that is not empty
 */
 int find_not_empty(struct rq* rq) {
     for(int i=0; i<10; i++) {
-        if(rq->new_rq.(sched_queue[i]).next != rq->new_rq.(sched_queue[i]).prev) {
+        if(rq->new_rq.sched_queue[i].next != rq->new_rq.sched_queue[i].prev) {
             return i;
         }
     }
@@ -106,7 +107,7 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
 
     int pos = find_not_empty(rq);
 
-    struct new_sched_task* new_task = container_of(&rq->new_rq.(sched_queue[pos]).next, struct new_sched_task, node);
+    struct new_sched_task* new_task = container_of(&rq->new_rq.sched_queue[pos].next, struct new_sched_task, node);
 
     struct task_struct* task = container_of(new_task, struct task_struct, nst);
     
@@ -178,7 +179,7 @@ static void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
 
     //remove task from list with current priority
     struct new_sched_task* found = NULL;
-    list_for_each_entry(found, &rq->new_rq.(sched_queue[p->nst.priority]), node) {
+    list_for_each_entry(found, &rq->new_rq.sched_queue[p->nst.priority], node) {
         if(found->id == p->nst.id) {
             list_del(&found->node);
             break;
@@ -191,7 +192,7 @@ static void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
     }
 
     //add task to list with new priority
-    list_add_tail(&p->nst.node, &rq->new_rq.(sched_queue[p->nst.priority]));
+    list_add_tail(&p->nst.node, &rq->new_rq.sched_queue[p->nst.priority]);
 
     resched_curr(rq);
 
