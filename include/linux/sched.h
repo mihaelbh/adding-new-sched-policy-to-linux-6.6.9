@@ -605,8 +605,12 @@ struct sched_rt_entity {
 } __randomize_layout;
 
 struct new_sched_task {
-    struct rb_node* node;
-    u64 enqueued_at;
+	u64 id;
+    struct list_head node;
+	//struct list_head rq_node;
+	int priority;
+    u64 time_slice;
+	int on_rq;
 };
 
 struct sched_dl_entity {

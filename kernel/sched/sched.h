@@ -658,7 +658,8 @@ struct cfs_rq {
 };
 
 struct new_rq {
-	struct rb_root new_root;
+	struct list_head sched_queue[10];
+	//struct list_head queue;
 	unsigned int nr_running;
 };
 
