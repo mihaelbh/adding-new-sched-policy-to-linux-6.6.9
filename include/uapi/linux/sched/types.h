@@ -6,6 +6,9 @@
 
 struct sched_param {
 	int sched_priority;
+#ifdef CONFIG_SCHED_NEW_POLICY
+	int new_sched_param;
+#endif
 };
 
 #define SCHED_ATTR_SIZE_VER0	48	/* sizeof first published struct */
@@ -119,6 +122,10 @@ struct sched_attr {
 	/* Utilization hints */
 	__u32 sched_util_min;
 	__u32 sched_util_max;
+
+#ifdef CONFIG_SCHED_NEW_POLICY
+	int new_sched_param;
+#endif
 
 };
 

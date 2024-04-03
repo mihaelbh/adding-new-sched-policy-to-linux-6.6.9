@@ -7893,6 +7893,9 @@ static int _sched_setscheduler(struct task_struct *p, int policy,
 		.sched_policy   = policy,
 		.sched_priority = param->sched_priority,
 		.sched_nice	= PRIO_TO_NICE(p->static_prio),
+#ifdef CONFIG_SCHED_NEW_POLICY
+		.new_sched_param = param->new_sched_param;
+#endif
 	};
 
 	/* Fixup the legacy SCHED_RESET_ON_FORK hack. */
