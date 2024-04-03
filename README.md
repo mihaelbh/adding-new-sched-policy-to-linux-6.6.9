@@ -29,4 +29,9 @@ Adding new policy to linux-6.6.9 kernel
 				- for grub run `grub-mkconfig -o /boot/grub/grub.cfg`, `sudo` may be required
 4. Reboot and load new kernel
 	- you can check if right kernel is loaded with `uname -r`
-5. To use new scheduler policy use function `sched_setscheduler(pid_t pid, int policy, const struct sched_param *param)`, set policy to 7, and set priority in sched\_param to 1
+5. Before using the scheduler in file /usr/include/bits/types/struct_sched_param.h add line `int new_sched_prio;` in struct sched\_param
+6. To use new scheduler policy 
+	- use function `sched_setscheduler(pid_t pid, int policy, const struct sched_param *param)`
+	- set policy to 7
+	- set priority in sched\_param to 1
+	- set new\_sched\_prio in sched\_param to a number between 0 and 9

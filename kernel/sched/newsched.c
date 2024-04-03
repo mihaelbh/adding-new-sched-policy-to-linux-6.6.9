@@ -12,7 +12,10 @@ const struct sched_class new_sched_class;
 
 u64 new_id = 1;
 
-
+/*
+function for initializing new_rq for every cpu
+called in sched_init() in /kernel/sched/core.c
+*/
 void init_new_rq(struct new_rq* new_rq) {
     for(int i=0; i<10; i++) {
         new_rq->sched_queue[i].prev = &new_rq->sched_queue[i];
@@ -22,9 +25,9 @@ void init_new_rq(struct new_rq* new_rq) {
     printk(KERN_INFO "init_new_rq\n");
 }
 
-
-
-
+/*
+function for enqueueing tasks
+*/
 static void enqueue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     
     printk(KERN_INFO "enter enqueue_task_new\n");
@@ -48,13 +51,20 @@ static void enqueue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     //set time_slice (default RR time_slice is used)
     p->nst.time_slice = RR_TIMESLICE;
 
+    //add task to the end of the list
     list_add_tail(&p->nst.node, &rq->new_rq.sched_queue[p->nst.priority]);
 
+    //mark that the task is on runqueue
     p->nst.on_rq = 1;
+
+    //increment the number of tasks on runqueue
     (rq->new_rq.nr_running)++;
     printk(KERN_INFO "exit enqueue_task_new, task enqueued\n");
 }
 
+/*
+function for dequeueing tasks
+*/
 static void dequeue_task_new(struct rq *rq, struct task_struct *p, int flags) {
     
     printk(KERN_INFO "enter dequeue_task_new\n");
@@ -69,6 +79,7 @@ static void dequeue_task_new(struct rq *rq, struct task_struct *p, int flags) {
         return;
     }
 
+    //remove task from the list
     struct new_sched_task* found = NULL;
     list_for_each_entry(found, &rq->new_rq.sched_queue[p->nst.priority], node) {
         if(found->id == p->nst.id) {
@@ -77,16 +88,19 @@ static void dequeue_task_new(struct rq *rq, struct task_struct *p, int flags) {
         }
     }
 
+    //set that task isn't on runqueue
     p->nst.on_rq = 0;
+
+    //decrement number of tasks on runqueue
     (rq->new_rq.nr_running)--;
     printk(KERN_INFO "exit dequeue_task_new, task dequeued\n");
 }
 
 /*
-find list for priority that is not empty
+find list for the biggest priority that is not empty
 */
 int find_not_empty(struct rq* rq) {
-    for(int i=0; i<10; i++) {
+    for(int i=9; i>=0; i--) {
         if(rq->new_rq.sched_queue[i].next != rq->new_rq.sched_queue[i].prev) {
             return i;
         }
@@ -107,14 +121,18 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
         return NULL;
     }
 
+    //find the biggest priority list that isn't empty
     int pos = find_not_empty(rq);
 
+    //if it returns -1 all lists are empty
     if(pos < 0) {
         return NULL;
     }
 
+    //get new_sched_task from list_head
     struct new_sched_task* new_task = container_of(rq->new_rq.sched_queue[pos].next, struct new_sched_task, node);
 
+    //get task_struct from new_sched_task
     struct task_struct* task = container_of(new_task, struct task_struct, nst);
     
     printk(KERN_INFO "exit pick_next_task_new\n");
@@ -122,28 +140,38 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
 }
 
 /*
-is called before a task is removed from CPU
+doesn't do anything but is part of sched_class
 */
 static void put_prev_task_new(struct rq *rq, struct task_struct *p) {
     printk(KERN_INFO "put_prev_task_new\n");
 }
 
 /*
-mark a task that has to stop executing
+marks a task that needs to stop to give cpu to more important task
 */
 static void check_preempt_curr_new(struct rq *rq, struct task_struct *p, int flags) {
     
     printk(KERN_INFO "enter check_preempt_curr_new\n");
 
     if (p->prio < rq->curr->prio) {
+        //if there is a task with bigger prio
+
+        //increment priority
         if(rq->curr->nst.priority < 9){
             rq->curr->nst.priority++;
         }
+
+        //reschedul current runqueue
 		resched_curr(rq);
 	} else if(rq->curr->prio == p->prio && p->prio == 98 && p->nst.priority > rq->curr->nst.priority) {
+        //if the tasks have same prio 98 (prio of new_sched_class) and current task has lower priority
+
+        //increment priority
         if(rq->curr->nst.priority < 9){
             rq->curr->nst.priority++;
         }
+
+        //reschedul current runqueue
         resched_curr(rq);
     }
 
@@ -152,6 +180,7 @@ static void check_preempt_curr_new(struct rq *rq, struct task_struct *p, int fla
 
 /*
 called when task changes policy or group
+changes when it started to current time
 */
 static void set_next_task_new(struct rq *rq, struct task_struct *p, bool first) {
     printk(KERN_INFO "set_next_task_new\n");
@@ -160,7 +189,7 @@ static void set_next_task_new(struct rq *rq, struct task_struct *p, bool first) 
 }
 
 /*
-update runtime statistics
+doesn't do anything but is part of sched_class
 */
 static void update_curr_new(struct rq *rq) {
     printk(KERN_INFO "update_curr_new\n");
@@ -178,7 +207,7 @@ static void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
         return;
     }
 
-    //if time_slice is 0
+    //if time_slice is 0 after decrement
 
     //reset time_slice (default RR time_slice is used)
     p->nst.time_slice = RR_TIMESLICE;
@@ -200,40 +229,47 @@ static void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
     //add task to list with new priority
     list_add_tail(&p->nst.node, &rq->new_rq.sched_queue[p->nst.priority]);
 
+    //reschedul runqueue
     resched_curr(rq);
 
     printk(KERN_INFO "exit task_tick_new, task rescheduled\n");
 }
 
 /*
-if task switches to SCHED_NEW we must check if it needs to be preempted
+called when task switches to SCHED_NEW
 */
 static void switched_to_new(struct rq *rq, struct task_struct *p) {
     printk(KERN_INFO "enter switched_to_new\n");
+    //we must check if it needs to be preempted
     check_preempt_curr_new(rq, p, 0);
     printk(KERN_INFO "exit switched_to_new\n");
 }
 
 /*
-if prio is changed check if the task needs to be preempted
+called if prio is changed
 */
 static void prio_changed_new(struct rq *rq, struct task_struct *p, int oldprio) {
     printk(KERN_INFO "enter prio_changed_new\n");
+    //check if the task needs to be preempted
     check_preempt_curr_new(rq, p, 0);
     printk(KERN_INFO "exit prio_changed_new\n");
 }
 
 /*
-
+moves task to the end of the list
 */
 static void yield_task_new(struct rq *rq) {
     printk(KERN_INFO "enter yield_task_new\n");
 
+    //move task to the end of the list
     list_move_tail(&rq->curr->nst.node, &rq->new_rq.sched_queue[rq->curr->nst.priority]);
 
     printk(KERN_INFO "exit yield_task_new\n");
 }
 
+/*
+returns time_slice
+*/
 static unsigned int get_rr_interval_new(struct rq *rq, struct task_struct *task) {
     printk(KERN_INFO "get_rr_interval_new\n");
     return RR_TIMESLICE;
