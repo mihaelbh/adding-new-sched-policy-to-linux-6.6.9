@@ -91,6 +91,8 @@ int find_not_empty(struct rq* rq) {
             return i;
         }
     }
+
+    return -1;
 }
 
 /*
@@ -107,7 +109,11 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
 
     int pos = find_not_empty(rq);
 
-    struct new_sched_task* new_task = container_of(&rq->new_rq.sched_queue[pos].next, struct new_sched_task, node);
+    if(pos < 0) {
+        return NULL;
+    }
+
+    struct new_sched_task* new_task = container_of(rq->new_rq.sched_queue[pos].next, struct new_sched_task, node);
 
     struct task_struct* task = container_of(new_task, struct task_struct, nst);
     
@@ -223,7 +229,7 @@ static void prio_changed_new(struct rq *rq, struct task_struct *p, int oldprio) 
 static void yield_task_new(struct rq *rq) {
     printk(KERN_INFO "enter yield_task_new\n");
 
-    list_move_tail(&rq->curr->nst.node, &rq->new_rq->sched_queue[rq->curr->nst.priority]);
+    list_move_tail(&rq->curr->nst.node, &rq->new_rq.sched_queue[rq->curr->nst.priority]);
 
     printk(KERN_INFO "exit yield_task_new\n");
 }
