@@ -140,10 +140,21 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
 }
 
 /*
-doesn't do anything but is part of sched_class
+puts back running task in runqueue
 */
 static void put_prev_task_new(struct rq *rq, struct task_struct *p) {
-    printk(KERN_INFO "put_prev_task_new\n");
+    printk(KERN_INFO "enter put_prev_task_new\n");
+
+    //if task is on runqueue don't do anything
+    if(p->nst.on_rq) {
+        printk(KERN_INFO "exit put_prev_task_new, task is in rq\n");
+        return;
+    }
+
+    //if task isn't on runqueue, enqueue it
+
+    enqueue_task_new(rq, p, 0);
+    printk(KERN_INFO "exit put_prev_task_new, task added to rq\n");
 }
 
 /*
@@ -180,12 +191,9 @@ static void check_preempt_curr_new(struct rq *rq, struct task_struct *p, int fla
 
 /*
 called when task changes policy or group
-changes when it started to current time
 */
 static void set_next_task_new(struct rq *rq, struct task_struct *p, bool first) {
     printk(KERN_INFO "set_next_task_new\n");
-
-    p->se.exec_start = rq_clock_task(rq);
 }
 
 /*
