@@ -605,9 +605,7 @@ struct sched_rt_entity {
 } __randomize_layout;
 
 struct new_sched_task {
-	u64 id;
-    struct list_head node;
-	//struct list_head rq_node;
+	struct list_head node;
 	int priority;
     u64 time_slice;
 	int on_rq;

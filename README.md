@@ -37,15 +37,26 @@ For detailed kernel compile guide see: https://itsfoss.com/compile-linux-kernel/
 3. Get .config file with `cp /proc/config.gz ./`, unzip it with `gunzip config.gz` and raname it with `mv config .config`
 4. Run `make oldconfig` to add new configuration options to .config
 5. Disable CONFIG_DEBUG_INFO_BTF in .config ( from my experience if it is enabled it gives error during compile )
-6. Change CONFIG_EXT$_FS=m from in .config from m to y if you use ext4 filesystem
+6. Change CONFIG_EXT4_FS=m from in .config from m to y if you use ext4 filesystem
 7. Start compiling with `make -j$(nproc) 2>&1 | tee log`
 	- if an error happens you can find it easy with `cat log | grep -i error`
 	- if an error happens run `make mrproper`, fix the error and start again from step 3
 8. Run `sudo make modules_install -j$(nproc)` to load modules
 9. Run `sudo install -Dm644 "$(make -s image_name)" /boot/vmlinuz-6.6.9-localversion` to install the kernel, replace localversion with whatever you want to distinguish it from other kernels
-10. Create initial ramdisk with `sudo mkinitcpio -P`
-11. Update bootloader ( for GRUB run `sudo grub-mkconfig -o /boot/grub/grub.cfg` )
-12. Reboot and select new kernel ( select "Advanced options for Arch Linux" in GRUB boot menu )
+10. Make file /etc/mkinitcpio.d/linux-localversion.preset and add (replace localversion with whatever you replaced it with in step before):
+```
+	ALL_config="/etc/mkinitcpio.conf"
+	ALL_kver="/boot/vmlinuz-6.6.9-localversion"
+
+	PRESETS=('default' 'fallback')
+
+	default_image="/boot/initramfs-6.6.9-localversion.img"
+	fallback_options="-S autodetect"
+```
+
+11. Create initial ramdisk with `sudo mkinitcpio -P`
+12. Update bootloader ( for GRUB run `sudo grub-mkconfig -o /boot/grub/grub.cfg` )
+13. Reboot and select new kernel ( select "Advanced options for Arch Linux" in GRUB boot menu )
 
 ### Run
 1. Check if right kernel is loaded with `uname -r`
