@@ -36,25 +36,7 @@ void print_rq(struct list_head* head) {
 updates current task's runtime statistics
 */
 static void update_curr_new(struct rq *rq) {
-    printk(KERN_INFO "enter update_curr_new\n");
-    struct task_struct *curr = rq->curr;
-	u64 now = rq_clock_task(rq);
-    u64 delta_exec = now - curr->se.exec_start;
-
-    if (curr->sched_class != &new_sched_class) {
-		return;
-    }
-
-    if (unlikely((s64)delta_exec <= 0)) {
-		return;
-    }
-
-    schedstat_set(curr->stats.exec_max, max(curr->stats.exec_max, delta_exec));
-
-    trace_sched_stat_runtime(curr, delta_exec, 0);
-
-	update_current_exec_runtime(curr, now, delta_exec);
-    printk(KERN_INFO "exit update_curr_new\n");
+    printk(KERN_INFO "update_curr_new\n");
 }
 
 /*
@@ -111,8 +93,6 @@ static void dequeue_task_new(struct rq *rq, struct task_struct *p, int flags) {
         printk(KERN_INFO "exit dequeue_task_new, rq is NULL\n");
         return;
     }
-
-    update_curr_new(rq);
 
     //remove task from the list
     list_del_init(&p->nst.node);
@@ -175,9 +155,7 @@ static struct task_struct* pick_next_task_new(struct rq *rq) {
 puts a running task back into a runqueue
 */
 static void put_prev_task_new(struct rq *rq, struct task_struct *p) {
-    printk(KERN_INFO "enter put_prev_task_new\n");
-    update_curr_new(rq);
-    printk(KERN_INFO "exit put_prev_task_new\n");
+    printk(KERN_INFO "put_prev_task_new\n");
 }
 
 /*
@@ -215,9 +193,7 @@ static void check_preempt_curr_new(struct rq *rq, struct task_struct *p, int fla
 called when task changes policy or group
 */
 static void set_next_task_new(struct rq *rq, struct task_struct *p, bool first) {
-    printk(KERN_INFO "enter set_next_task_new\n");
-    p->se.exec_start = rq_clock_task(rq);
-    printk(KERN_INFO "exit set_next_task_new\n");
+    printk(KERN_INFO "set_next_task_new\n");
 }
 
 /*
@@ -225,8 +201,6 @@ called when timer interupt happends
 */
 static void task_tick_new(struct rq *rq, struct task_struct *p, int queued) {
     printk(KERN_INFO "enter task_tick_new\n");
-
-    update_curr_new(rq);
 
     //decrement time_slice and if it isn't 0 return
     if(--p->nst.time_slice) {
